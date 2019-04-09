@@ -42,6 +42,21 @@ Figure 3: Rolling Snowball Scene from [3]
 
 Figure 4: Falling snow blocked by a cube from [5]
 
+## Schedule
+
+- Week1
+  1. Read papers about particles simulation and snow simulation
+  2. Get familiar with OpenGL and WebGL
+- Week2
+  1. Read the code for snow simulation based on current publications
+  2. Transfer the C++ based snow simulation code base to WebGL with Javascript
+- Week3
+  1. Modify algorithms to get a better performance, debug, debug, and debug
+  2. Add new features to WebGL snow simulation and test its performance
+- Week4
+  1. Evaluate the performace with metrics and benchmarks mentioned above
+  2. Finish demos and deliverables
+
 ## Resources
 
 [1] Tan, Jian, and Xiangtao Fan. "Particle system based snow simulating in real time." *Procedia Environmental Sciences* 10 (2011): 1244-1249.
