@@ -3,3 +3,11 @@
 
 # Vim swaps
 *.sw*
+
+# code editors
+*.code-workspace
+
+# node & webpack
+node_modules
+/build
+*.log*
