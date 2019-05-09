@@ -163,7 +163,7 @@ export default class MPMGrid {
                         // const ii = this.gridIndex(base_coord[0] + i, base_coord[1] + j);
                         const ii = this.gridIndex(...math.add(base_coord, [i, j, k]));
 
-                        const weight = w[i][0] * w[j][1];  // ???
+                        const weight = w[i][0] * w[j][1] * w[k][2];  // ???
                         
                         // this.grid[ii] = add3D(this.grid[ii], sca3D(add3D(mv, [...mulMatVec(affine, dpos),0]), weight));
 
