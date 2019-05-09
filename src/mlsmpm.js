@@ -42,12 +42,11 @@ export function clamp(x, min, max) {return Math.min(Math.max(x,min),max)}
 function polarDecomposition(m) {
     let {u:U, v:V, q:q} = SVD(m);
     return math.multiply(math.transpose(U), V);
-    // return math.chain(V).multiply(math.diag(q)).multiply(math.transpose(V)).done();
 }
 
 
 export default class MPMGrid {
-    constructor(box_lowers = [0, 0], box_uppers = [1, 1], n = 80, dt = 1e-4) {
+    constructor(box_lowers = [0, 0, 0], box_uppers = [1, 1, 1], n = 80, dt = 1e-4) {
         this.a = box_lowers;
         this.b = box_uppers;
 
