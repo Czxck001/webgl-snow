@@ -1,6 +1,4 @@
 "use strict";
-
-
 import * as math from "mathjs";
 import {SVD} from "svd-js";
 
@@ -21,20 +19,10 @@ class Particle {
         
         this.x = x;
         this.v = [0, 0];
-        this.F = [1, 0, 0, 1];
-        this.C = [0, 0, 0, 0];
+        this.F = [[1, 0], [0, 1]];
+        this.C = [[0, 0], [0, 0]];
         this.Jp = 1;
     }
-}
-
-
-function toMatrix(a) {
-    return [[a[0], a[2]], 
-            [a[1], a[3]]];
-}
-
-function toArray(m) {
-    return [m[0][0], m[1][0], m[0][1], m[1][1]];
 }
 
 function orthOuterProduct(a, b) {
@@ -127,31 +115,26 @@ export default class MPMGrid {
             // (in taichi matrices are coded transposed)
             // const J = determinant(p.F); // Current volume
 
-            const mpf = toMatrix(p.F);
-            const J = math.det(mpf);
+            const J = math.det(p.F);
             // const {R:r, S:s} = polar_decomp(p.F); // Polar decomp. for fixed corotated model
-            const mr = polarDecomposition(mpf);
+            const mr = polarDecomposition(p.F);
 
             const k1 = -4*this.inv_dx*this.inv_dx*this.dt*vol;
             const k2 = lambda*(J-1)*J;
 
             // const stress = addMat( mulMat(subMat(transposed(p.F),r),p.F).map(o=>o*2*mu), [k2,0,0,k2] ).map(o=>o*k1);
 
-            // const mr = toMatrix(r);
-            const mstress = math.chain(mpf).transpose()
+            const mstress = math.chain(p.F).transpose()
                                 .add(math.unaryMinus(mr))
-                                .multiply(mpf)
+                                .multiply(p.F)
                                 .multiply(2*mu)
                                 .add([[k2, 0], [0, k2]])
                                 .multiply(k1)
                                 .done();
-            const stress = toArray(mstress);
 
             // const affine = addMat(stress, p.C.map(o=>o*particle_mass));
             
-            const mpc = toMatrix(p.C);
-            const maffine = math.chain(mpc).multiply(particle_mass).add(mstress).done();
-            const affine = toArray(maffine);
+            const maffine = math.chain(p.C).multiply(particle_mass).add(mstress).done();
     
             // const mv = [p.v[0]*particle_mass, p.v[1]*particle_mass, particle_mass]; // translational momentum
             
@@ -224,7 +207,7 @@ export default class MPMGrid {
                 math.chain(fx).add(-0.5).square().multiply(0.5).done()
             ]
 
-            p.C = [0,0, 0,0];
+            p.C = [[0,0], [0,0]];
             p.v = [0, 0];
             for (let i = 0; i < 3; i++) {
                 for (let j = 0; j < 3; j++) {
@@ -240,10 +223,8 @@ export default class MPMGrid {
 
                     // p.C = addMat(p.C, outer_product(sca2D(this.grid[ii], weight), dpos).map(o=>o*4*this.inv_dx)); // APIC (affine particle-in-cell); p.C is the affine momentum
                     
-                    const mpc = toMatrix(p.C);
                     const op_res = math.multiply(orthOuterProduct(math.multiply(this.grid[ii].slice(0, 2), weight), dpos), 4*this.inv_dx);
-                    const new_mpc = math.add(op_res, mpc);
-                    p.C = toArray(new_mpc);
+                    p.C = math.add(op_res, p.C);
                 }
             }
     
@@ -255,11 +236,8 @@ export default class MPMGrid {
             // original taichi: F = (Mat(1) + dt * p.C) * p.F
             // let F = mulMat(p.F, addMat([1,0, 0,1], p.C.map(o=>o*this.dt)));
 
-            const mpf = toMatrix(p.F);
-            const mpc = toMatrix(p.C);
-            let cc = math.chain(mpc).multiply(this.dt).add([[1, 0], [0, 1]]).done();
-            let mF = math.multiply(mpf, cc);
-            let F = toArray(mF);
+            let cc = math.chain(p.C).multiply(this.dt).add([[1, 0], [0, 1]]).done();
+            let mF = math.multiply(p.F, cc);
     
             // Snow-like plasticity
             // let {U:svd_u, sig:sig, V:svd_v} = svd(F);
@@ -281,13 +259,12 @@ export default class MPMGrid {
             // F = mulMat(mulMat(svd_u, sig), transposed(svd_v));
 
             mF = math.chain(svd_um).multiply(sig_m).multiply(math.transpose(svd_vm)).done();
-            F = toArray(mF);
 
             // const Jp_new = clamp(p.Jp * oldJ / determinant(F), 0.6, 20.0);
             const Jp_new = clamp(p.Jp * oldJ / math.det(mF), 0.6, 20.0);
 
             p.Jp = Jp_new;
-            p.F = F;
+            p.F = mF;
         }
     }
 
