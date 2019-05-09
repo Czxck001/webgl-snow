@@ -7,6 +7,7 @@ import {add2D, sub2D, sca2D, had2D, determinant, polar_decomp,
 
 import * as math from "mathjs";
 import {SVD} from "svd-js";
+import {polar} from "./num.min.js";
 
 
 // material constants
@@ -50,6 +51,13 @@ function orthOuterProduct(a, b) {
         }
     }
     return c;
+}
+
+
+function polarDecomposition(m) {
+    let {u:U, v:V, q:q} = SVD(m);
+    return math.multiply(math.transpose(U), V);
+    // return math.chain(V).multiply(math.diag(q)).multiply(math.transpose(V)).done();
 }
 
 
@@ -125,12 +133,14 @@ export default class MPMGrid {
             const mpf = toMatrix(p.F);
             const J = math.det(mpf);
             const {R:r, S:s} = polar_decomp(p.F); // Polar decomp. for fixed corotated model
+            const mr = polarDecomposition(mpf);
+
             const k1 = -4*this.inv_dx*this.inv_dx*this.dt*vol;
             const k2 = lambda*(J-1)*J;
 
             // const stress = addMat( mulMat(subMat(transposed(p.F),r),p.F).map(o=>o*2*mu), [k2,0,0,k2] ).map(o=>o*k1);
 
-            const mr = toMatrix(r);
+            // const mr = toMatrix(r);
             const mstress = math.chain(mpf).transpose()
                                 .add(math.unaryMinus(mr))
                                 .multiply(mpf)
