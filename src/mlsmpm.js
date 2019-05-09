@@ -13,14 +13,20 @@ const mu_0 = E / (2 * (1 + nu)); // Shear modulus (or Dynamic viscosity in fluid
 const lambda_0 = E * nu / ((1+nu) * (1 - 2 * nu)); // Lamé's 1st parameter \lambda=K-(2/3)\mu, where K is the Bulk modulus
 const plastic = 1; // whether (1=true) or not (0=false) to simulate plasticity
 
+const miden = [[1, 0], [0, 1]];
+const mzero = [[0, 0], [0, 0]];
+const vzero = [0, 0];
+const pzero = [0, 0, 0];
+
+
 class Particle {
     constructor(snow_particle, x) {
         this.snow_particle = snow_particle;
         
         this.x = x;
-        this.v = [0, 0];
-        this.F = [[1, 0], [0, 1]];
-        this.C = [[0, 0], [0, 0]];
+        this.v = vzero;
+        this.F = miden;
+        this.C = mzero;
         this.Jp = 1;
     }
 }
@@ -64,24 +70,26 @@ export default class MPMGrid {
         return i + (this.n+1)*j;
     }
 
-    worldCoordToGrid(x, y) {
+    worldCoordToGrid(x, y, z) {
         return [
             (x - this.a[0]) / (this.b[0] - this.a[0]),
             (y - this.a[1]) / (this.b[1] - this.a[1])
+            // (z - this.a[2]) / (this.b[2] - this.a[2])
         ]
     }
 
-    gridCoordToWorld(x, y) {
+    gridCoordToWorld(x, y, z) {
         return [
             x * (this.b[0] - this.a[0]) + this.a[0],
             y * (this.b[1] - this.a[1]) + this.a[1]
+            // z * (this.b[2] - this.a[2]) + this.a[2]
         ]
     }
 
     advance() {
         // Reset grid
         for(let i = 0; i < (this.n+1)*(this.n+1); i++) {
-            this.grid[i] = [0,0,0];  // [x, y, mass]
+            this.grid[i] = pzero;  // [x, y, mass]
         }
     
         // 1. Particles to grid
@@ -175,7 +183,7 @@ export default class MPMGrid {
     
                     // stick
                     if (x < boundary||x > 1-boundary||y > 1-boundary) {
-                        this.grid[ii]=[0,0,0];
+                        this.grid[ii]=pzero;
                     }
     
                     // separate
@@ -206,8 +214,8 @@ export default class MPMGrid {
                 math.chain(fx).add(-0.5).square().multiply(0.5).done()
             ]
 
-            p.C = [[0,0], [0,0]];
-            p.v = [0, 0];
+            p.C = mzero;
+            p.v = vzero;
             for (let i = 0; i < 3; i++) {
                 for (let j = 0; j < 3; j++) {
                     // const dpos = sub2D([i, j], fx);
@@ -235,7 +243,7 @@ export default class MPMGrid {
             // original taichi: F = (Mat(1) + dt * p.C) * p.F
             // let F = mulMat(p.F, addMat([1,0, 0,1], p.C.map(o=>o*this.dt)));
 
-            let cc = math.chain(p.C).multiply(this.dt).add([[1, 0], [0, 1]]).done();
+            let cc = math.chain(p.C).multiply(this.dt).add(miden).done();
             let mF = math.multiply(p.F, cc);
     
             // Snow-like plasticity
@@ -268,15 +276,17 @@ export default class MPMGrid {
     }
 
     add_particle(snow_particle) {
+        // let x = this.worldCoordToGrid(snow_particle.position.x, snow_particle.position.y, snow_particle.position.z);
         let x = this.worldCoordToGrid(snow_particle.position.x, snow_particle.position.y);
         this.particles.push(new Particle(snow_particle, x));
     }
 
     update_snow_particles() {
         for (let particle of this.particles) {
-            let x = this.gridCoordToWorld(particle.x[0], particle.x[1]);
+            let x = this.gridCoordToWorld(...particle.x);
             particle.snow_particle.position.x = x[0];
             particle.snow_particle.position.y = x[1];
+            // particle.snow_particle.position.z = x[2];
         }
     }
 }
