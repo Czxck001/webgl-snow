@@ -1,9 +1,5 @@
 "use strict";
 
-import {add2D, sub2D, sca2D, had2D, determinant, polar_decomp, 
-    addMat, mulMat, subMat, transposed, add3D, sca3D, mulMatVec, outer_product,
-    svd, clamp} from "./algebra.js";
-
 
 import * as math from "mathjs";
 import {SVD} from "svd-js";
@@ -51,6 +47,8 @@ function orthOuterProduct(a, b) {
     }
     return c;
 }
+
+export function clamp(x, min, max) {return Math.min(Math.max(x,min),max)}
 
 
 function polarDecomposition(m) {
@@ -131,7 +129,7 @@ export default class MPMGrid {
 
             const mpf = toMatrix(p.F);
             const J = math.det(mpf);
-            const {R:r, S:s} = polar_decomp(p.F); // Polar decomp. for fixed corotated model
+            // const {R:r, S:s} = polar_decomp(p.F); // Polar decomp. for fixed corotated model
             const mr = polarDecomposition(mpf);
 
             const k1 = -4*this.inv_dx*this.inv_dx*this.dt*vol;
