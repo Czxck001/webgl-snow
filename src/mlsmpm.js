@@ -7,7 +7,6 @@ import {add2D, sub2D, sca2D, had2D, determinant, polar_decomp,
 
 import * as math from "mathjs";
 import {SVD} from "svd-js";
-import {polar} from "./num.min.js";
 
 
 // material constants
