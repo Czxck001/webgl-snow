@@ -6,6 +6,7 @@ import {add2D, sub2D, sca2D, had2D, determinant, polar_decomp,
 
 
 import * as math from "mathjs";
+import {SVD} from "svd-js";
 
 
 // material constants
@@ -254,19 +255,23 @@ export default class MPMGrid {
             let F = toArray(mF);
     
             // Snow-like plasticity
-            let {U:svd_u, sig:sig, V:svd_v} = svd(F);
-            for (let i = 0; i < 2 * plastic; i++) {
-                sig[i+2*i] = clamp(sig[i+2*i], 1.0 - 2.5e-2, 1.0 + 7.5e-3);
+            // let {U:svd_u, sig:sig, V:svd_v} = svd(F);
+            
+            // for (let i = 0; i < 2 * plastic; i++) {
+            //     sig[i+2*i] = clamp(sig[i+2*i], 1.0 - 2.5e-2, 1.0 + 7.5e-3);
+            // }
+
+            let {u:svd_um, v:svd_vm, q:q} = SVD(mF);
+            for (let i = 0; i < q.length; ++i) {
+                q[i] = clamp(q[i], 1.0 - 2.5e-2, 1.0 + 7.5e-3);
             }
+            const sig_m = math.diag(q);
+
             // const oldJ = determinant(F);
             const oldJ = math.det(mF);
 
             // original taichi: F = svd_u * sig * transposed(svd_v)
             // F = mulMat(mulMat(svd_u, sig), transposed(svd_v));
-            
-            const svd_vm = toMatrix(svd_v);
-            const svd_um = toMatrix(svd_u);
-            const sig_m = toMatrix(sig);
 
             mF = math.chain(svd_um).multiply(sig_m).multiply(math.transpose(svd_vm)).done();
             F = toArray(mF);
