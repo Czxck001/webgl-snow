@@ -5,10 +5,10 @@ import {SVD} from "svd-js";
 
 // material constants
 const particle_mass = 1.0;
-const vol = 1.0; // particle volume
+const vol = 0.03; // particle volume
 const hardening = 10.0; // hardening constant for snow plasticity under compression
-const E = 1e+4; // Young's modulus
-const nu = 0.2; // Poisson's ratio
+const E = 1e+1; // Young's modulus
+const nu = 0.1; // Poisson's ratio
 const mu_0 = E / (2 * (1 + nu)); // Shear modulus (or Dynamic viscosity in fluids)
 const lambda_0 = E * nu / ((1+nu) * (1 - 2 * nu)); // Lamé's 1st parameter \lambda=K-(2/3)\mu, where K is the Bulk modulus
 const plastic = 1; // whether (1=true) or not (0=false) to simulate plasticity
@@ -17,11 +17,11 @@ class Particle {
     constructor(snow_particle, x) {
         this.snow_particle = snow_particle;
         
-        this.x = x;
-        this.v = [0, 0];
-        this.F = [[1, 0], [0, 1]];
-        this.C = [[0, 0], [0, 0]];
-        this.Jp = 1;
+        this.x = x; // position
+        this.v = [0, 0, 0]; // velocity
+        this.F = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; // Deformation tensor
+        this.C = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]; // Cauchy tensor
+        this.Jp = 1; // Jacobian determinant (scalar)
     }
 }
 
@@ -47,7 +47,7 @@ function polarDecomposition(m) {
 
 
 export default class MPMGrid {
-    constructor(box_lowers = [0, 0], box_uppers = [1, 1], n = 80, dt = 1e-4) {
+    constructor(box_lowers = [0, 0, 0], box_uppers = [1, 1, 1], n = 80, dt = 1e-4) {
         this.a = box_lowers;
         this.b = box_uppers;
 
@@ -61,34 +61,36 @@ export default class MPMGrid {
         this.grid = []; // velocity + mass, node_res = cell_res + 1
     }
 
-    gridIndex(i, j) {
-        return i + (this.n+1)*j;
+    gridIndex(i, j, k) {
+        return i + (this.n+1)*j + (this.n+1)*(this.n+1)*k;
     }
 
-    worldCoordToGrid(x, y) {
+    worldCoordToGrid(x, y, z) {
         return [
             (x - this.a[0]) / (this.b[0] - this.a[0]),
-            (y - this.a[1]) / (this.b[1] - this.a[1])
+            (y - this.a[1]) / (this.b[1] - this.a[1]),
+            (z - this.a[2]) / (this.b[2] - this.a[2]),
         ]
     }
 
-    gridCoordToWorld(x, y) {
+    gridCoordToWorld(x, y, z) {
         return [
             x * (this.b[0] - this.a[0]) + this.a[0],
-            y * (this.b[1] - this.a[1]) + this.a[1]
+            y * (this.b[1] - this.a[1]) + this.a[1],
+            z * (this.b[2] - this.a[2]) + this.a[2]
         ]
     }
 
     advance() {
         // Reset grid
-        for(let i = 0; i < (this.n+1)*(this.n+1); i++) {
-            this.grid[i] = [0,0,0];  // [x, y, mass]
+        for(let i = 0; i < (this.n+1)*(this.n+1)*(this.n+1); i++) {
+            this.grid[i] = [0,0,0,0];  // [x, y, z, mass]
         }
     
         // 1. Particles to grid
         for (let p of this.particles) {
             // const base_coord=sub2D(sca2D(p.x, this.inv_dx), [0.5,0.5]).map((o)=>parseInt(o)); // element-wise floor
-            const base_coord = math.chain(p.x).multiply(this.inv_dx).add([-0.5, -0.5]).floor().done();  // element-wise floor
+            const base_coord = math.chain(p.x).multiply(this.inv_dx).add([-0.5, -0.5 ,-0.5]).floor().done();  // element-wise floor
             // const fx = sub2D(sca2D(p.x, this.inv_dx), base_coord); // base position in grid units
             const fx = math.chain(p.x).multiply(this.inv_dx).add(math.unaryMinus(base_coord)).done();
     
@@ -128,7 +130,7 @@ export default class MPMGrid {
                                 .add(math.unaryMinus(mr))
                                 .multiply(p.F)
                                 .multiply(2*mu)
-                                .add([[k2, 0], [0, k2]])
+                                .add([[k2, 0, 0], [0, k2, 0], [0, 0, k2]])
                                 .multiply(k1)
                                 .done();
 
@@ -142,20 +144,23 @@ export default class MPMGrid {
 
             for (let i = 0; i < 3; i++) {
                 for (let j = 0; j < 3; j++) { // scatter to grid
-                    // const dpos = [(i-fx[0])*this.dx, (j-fx[1])*this.dx];
-                    const dpos = math.chain(fx).unaryMinus().add([i, j]).multiply(this.dx).done();
+                    for (let k = 0; k < 3; k++) { // scatter to grid
+                        // const dpos = [(i-fx[0])*this.dx, (j-fx[1])*this.dx];
+                    const dpos = math.chain(fx).unaryMinus().add([i, j, k]).multiply(this.dx).done();
                     // const ii = this.gridIndex(base_coord[0] + i, base_coord[1] + j);
-                    const ii = this.gridIndex(...math.add(base_coord, [i, j]));
+                    const ii = this.gridIndex(...math.add(base_coord, [i, j, k]));
 
-                    const weight = w[i][0] * w[j][1];  // ???
+                    const weight = w[i][0] * w[j][1] * w[k][2];  // ???
                     
                     // this.grid[ii] = add3D(this.grid[ii], sca3D(add3D(mv, [...mulMatVec(affine, dpos),0]), weight));
 
+                        // console.log(maffine[0],maffine[1],maffine[2], dpos,[...math.multiply(maffine, dpos), 0]);
                     this.grid[ii] = math.chain([...math.multiply(maffine, dpos), 0])
                                         .add(mv)
                                         .multiply(weight)
                                         .add(this.grid[ii])
                                         .done();
+                    }
                 }
             }
         }
@@ -163,25 +168,27 @@ export default class MPMGrid {
         // Modify grid velocities to respect boundaries
         const boundary = 0.05;
         for(let i = 0; i <= this.n; i++) {
-            for(let j = 0; j <= this.n; j++) { // for all grid nodes
-                const ii = this.gridIndex(i, j);
-                if (this.grid[ii][2] > 0) { // no need for epsilon here
-                    this.grid[ii] = this.grid[ii].map(o=>o/this.grid[ii][2]); // normalize by mass
+            for(let j = 0; j <= this.n; j++) {
+                for(let k = 0; k <= this.n; k++) { // for all grid nodes
+                    const ii = this.gridIndex(i, j, k);
+                    if (this.grid[ii][3] > 0) { // no need for epsilon here
+                        this.grid[ii] = this.grid[ii].map(o=>o/this.grid[ii][3]); // normalize by mass
 
-                    // this.grid[ii] = add3D(this.grid[ii], [0,-200*this.dt,0]); // add gravity
-                    this.grid[ii] = math.add(this.grid[ii], [0, -200*this.dt,0]);
+                        // this.grid[ii] = add3D(this.grid[ii], [0,-200*this.dt,0]); // add gravity
+                        this.grid[ii] = math.add(this.grid[ii], [0, -300*this.dt,0,0]);
 
-                    const x = i/this.n;
-                    const y = j/this.n; // boundary thickness, node coord
-    
-                    // stick
-                    if (x < boundary||x > 1-boundary||y > 1-boundary) {
-                        this.grid[ii]=[0,0,0];
-                    }
-    
-                    // separate
-                    if (y < boundary) {
-                        this.grid[ii][1] = Math.max(0.0, this.grid[ii][1]);
+                        const x = i/this.n;
+                        const y = j/this.n; // boundary thickness, node coord
+                        const z = k/this.n; // boundary thickness, node coord
+                        // stick
+                        if (x < boundary||x > 1-boundary||y > 1-boundary||z < boundary||z > 1-boundary) {
+                            this.grid[ii]=[0,0,0, 0];
+                        }
+
+                        // separate
+                        if (y < boundary) {
+                            this.grid[ii][1] = Math.max(0.0, this.grid[ii][1]);
+                        }
                     }
                 }
             }
@@ -190,7 +197,7 @@ export default class MPMGrid {
         // 2. Grid to particle
         for (let p of this.particles) {
             // const base_coord=sub2D(p.x.map(o=>o*this.inv_dx),[0.5,0.5]).map(o=>parseInt(o));// element-wise floor
-            const base_coord = math.chain(p.x).multiply(this.inv_dx).add([-0.5, -0.5]).floor().done();  // element-wise floor
+            const base_coord = math.chain(p.x).multiply(this.inv_dx).add([-0.5, -0.5, -0.5]).floor().done();  // element-wise floor
 
 
             // const fx = sub2D(sca2D(p.x, this.inv_dx), base_coord); // base position in grid units
@@ -207,24 +214,26 @@ export default class MPMGrid {
                 math.chain(fx).add(-0.5).square().multiply(0.5).done()
             ]
 
-            p.C = [[0,0], [0,0]];
-            p.v = [0, 0];
+            p.C = [[0,0,0], [0,0,0], [0,0,0]];
+            p.v = [0, 0, 0];
             for (let i = 0; i < 3; i++) {
                 for (let j = 0; j < 3; j++) {
-                    // const dpos = sub2D([i, j], fx);
-                    const dpos = math.chain(fx).unaryMinus().add([i, j]).done();
+                    for (let k = 0; k < 3; k++) {
+                        // const dpos = sub2D([i, j], fx);
+                        const dpos = math.chain(fx).unaryMinus().add([i, j, k]).done();
 
-                    // const ii = this.gridIndex(base_coord[0] + i, base_coord[1] + j);
-                    const ii = this.gridIndex(...math.add(base_coord, [i, j]));
+                        // const ii = this.gridIndex(base_coord[0] + i, base_coord[1] + j);
+                        const ii = this.gridIndex(...math.add(base_coord, [i, j, k]));
 
-                    const weight = w[i][0] * w[j][1];
-                    // p.v = add2D(p.v, sca2D(this.grid[ii], weight)); // velocity
-                    p.v = math.chain(this.grid[ii].slice(0, 2)).multiply(weight).add(p.v).done();
+                        const weight = w[i][0] * w[j][1] * w[k][2];
+                        // p.v = add2D(p.v, sca2D(this.grid[ii], weight)); // velocity
+                        p.v = math.chain(this.grid[ii].slice(0, 3)).multiply(weight).add(p.v).done();
 
-                    // p.C = addMat(p.C, outer_product(sca2D(this.grid[ii], weight), dpos).map(o=>o*4*this.inv_dx)); // APIC (affine particle-in-cell); p.C is the affine momentum
-                    
-                    const op_res = math.multiply(orthOuterProduct(math.multiply(this.grid[ii].slice(0, 2), weight), dpos), 4*this.inv_dx);
-                    p.C = math.add(op_res, p.C);
+                        // p.C = addMat(p.C, outer_product(sca2D(this.grid[ii], weight), dpos).map(o=>o*4*this.inv_dx)); // APIC (affine particle-in-cell); p.C is the affine momentum
+
+                        const op_res = math.multiply(orthOuterProduct(math.multiply(this.grid[ii].slice(0, 3), weight), dpos), 4*this.inv_dx);
+                        p.C = math.add(op_res, p.C);
+                    }
                 }
             }
     
@@ -236,7 +245,7 @@ export default class MPMGrid {
             // original taichi: F = (Mat(1) + dt * p.C) * p.F
             // let F = mulMat(p.F, addMat([1,0, 0,1], p.C.map(o=>o*this.dt)));
 
-            let cc = math.chain(p.C).multiply(this.dt).add([[1, 0], [0, 1]]).done();
+            let cc = math.chain(p.C).multiply(this.dt).add([[1, 0, 0], [0, 1, 0], [0, 0, 1]]).done();
             let mF = math.multiply(p.F, cc);
     
             // Snow-like plasticity
@@ -269,15 +278,16 @@ export default class MPMGrid {
     }
 
     add_particle(snow_particle) {
-        let x = this.worldCoordToGrid(snow_particle.position.x, snow_particle.position.y);
+        let x = this.worldCoordToGrid(snow_particle.position.x, snow_particle.position.y, snow_particle.position.z);
         this.particles.push(new Particle(snow_particle, x));
     }
 
     update_snow_particles() {
         for (let particle of this.particles) {
-            let x = this.gridCoordToWorld(particle.x[0], particle.x[1]);
+            let x = this.gridCoordToWorld(particle.x[0], particle.x[1], particle.x[2]);
             particle.snow_particle.position.x = x[0];
             particle.snow_particle.position.y = x[1];
+            particle.snow_particle.position.z = x[2];
         }
     }
 }
