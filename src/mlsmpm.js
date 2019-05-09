@@ -13,6 +13,7 @@ const mu_0 = E / (2 * (1 + nu)); // Shear modulus (or Dynamic viscosity in fluid
 const lambda_0 = E * nu / ((1+nu) * (1 - 2 * nu)); // Lamé's 1st parameter \lambda=K-(2/3)\mu, where K is the Bulk modulus
 const plastic = 1; // whether (1=true) or not (0=false) to simulate plasticity
 
+const DIM = 2;
 const miden = [[1, 0], [0, 1]];
 const mzero = [[0, 0], [0, 0]];
 const vzero = [0, 0];
@@ -172,8 +173,8 @@ export default class MPMGrid {
         for(let i = 0; i <= this.n; i++) {
             for(let j = 0; j <= this.n; j++) { // for all grid nodes
                 const ii = this.gridIndex(i, j);
-                if (this.grid[ii][2] > 0) { // no need for epsilon here
-                    this.grid[ii] = this.grid[ii].map(o=>o/this.grid[ii][2]); // normalize by mass
+                if (this.grid[ii][DIM] > 0) { // no need for epsilon here
+                    this.grid[ii] = this.grid[ii].map(o=>o/this.grid[ii][DIM]); // normalize by mass
 
                     // this.grid[ii] = add3D(this.grid[ii], [0,-200*this.dt,0]); // add gravity
                     this.grid[ii] = math.add(this.grid[ii], [0, -200*this.dt,0]);
@@ -226,11 +227,11 @@ export default class MPMGrid {
 
                     const weight = w[i][0] * w[j][1];
                     // p.v = add2D(p.v, sca2D(this.grid[ii], weight)); // velocity
-                    p.v = math.chain(this.grid[ii].slice(0, 2)).multiply(weight).add(p.v).done();
+                    p.v = math.chain(this.grid[ii].slice(0, DIM)).multiply(weight).add(p.v).done();
 
                     // p.C = addMat(p.C, outer_product(sca2D(this.grid[ii], weight), dpos).map(o=>o*4*this.inv_dx)); // APIC (affine particle-in-cell); p.C is the affine momentum
                     
-                    const op_res = math.multiply(orthOuterProduct(math.multiply(this.grid[ii].slice(0, 2), weight), dpos), 4*this.inv_dx);
+                    const op_res = math.multiply(orthOuterProduct(math.multiply(this.grid[ii].slice(0, DIM), weight), dpos), 4*this.inv_dx);
                     p.C = math.add(op_res, p.C);
                 }
             }
