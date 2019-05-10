@@ -1,6 +1,8 @@
 "use strict";
 import * as math from "mathjs";
 import {SVD} from "svd-js";
+import {Clock} from "three";
+import * as async from "async";
 
 
 // material constants
@@ -60,7 +62,7 @@ function polarDecomposition(m) {
 
 
 export default class MPMGrid {
-    constructor(box_lowers = [0, 0, 0], box_uppers = [1, 1, 1], n = 150, dt = 1e-4) {
+    constructor(box_lowers = [0, 0, 0], box_uppers = [1, 1, 1], n = 40, dt = 1e-4) {
         this.a = box_lowers;
         this.b = box_uppers;
 
@@ -95,13 +97,17 @@ export default class MPMGrid {
     }
 
     advance() {
+        let clock = new Clock();
+        clock.start();
+        
         // Reset grid
         for(let i = 0; i < (this.n+1)*(this.n+1)*(this.n+1); i++) {
             this.grid[i] = pzero;  // [x, y, mass]
         }
     
         // 1. Particles to grid
-        for (let p of this.particles) {
+        // for (let p of this.particles) {
+        const ptg = (p) => {
             // const base_coord=sub2D(sca2D(p.x, this.inv_dx), [0.5,0.5]).map((o)=>parseInt(o)); // element-wise floor
             const base_coord = math.chain(p.x).multiply(this.inv_dx).add(-0.5).floor().done();  // element-wise floor
             // const fx = sub2D(sca2D(p.x, this.inv_dx), base_coord); // base position in grid units
@@ -176,6 +182,9 @@ export default class MPMGrid {
                 }
             }
         }
+        async.each(this.particles, ptg);
+
+        // console.log("PTG", clock.getDelta());
     
         // Modify grid velocities to respect boundaries
         const boundary = 0.05;
@@ -206,9 +215,12 @@ export default class MPMGrid {
                 }
             }
         }
+
+        // console.log("PTG2", clock.getDelta());
     
         // 2. Grid to particle
-        for (let p of this.particles) {
+        // for (let p of this.particles) {
+        const gtp = (p) => {
             // const base_coord=sub2D(p.x.map(o=>o*this.inv_dx),[0.5,0.5]).map(o=>parseInt(o));// element-wise floor
             const base_coord = math.chain(p.x).multiply(this.inv_dx).add(-0.5).floor().done();  // element-wise floor
 
@@ -288,6 +300,9 @@ export default class MPMGrid {
             p.Jp = Jp_new;
             p.F = mF;
         }
+
+        async.each(this.particles, gtp);
+        // console.log("GTP", clock.getDelta());
     }
 
     add_particle(snow_particle) {

@@ -15,6 +15,7 @@
     "build": "webpack --mode production"
   },
   "dependencies": {
+    "async": "^2.6.2",
     "mathjs": "^5.10.0",
     "svd-js": "^1.0.1",
     "three": "^0.98.0",
