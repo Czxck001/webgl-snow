@@ -25,7 +25,7 @@ document.body.appendChild( stats.dom );
 scene.add(seedScene);
 
 // camera
-camera.position.set(6,3,-10);
+camera.position.set(0,2,-6);
 camera.lookAt(new Vector3(0,0,0));
 
 // renderer
