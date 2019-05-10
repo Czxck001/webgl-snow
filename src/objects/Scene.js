@@ -1,8 +1,9 @@
-import { Group, AmbientLight, PointLight, LightShadow, PerspectiveCamera, SpotLight, IcosahedronGeometry, Points, Geometry, Vector3, Face3, SphereGeometry, MeshBasicMaterial, Mesh, Object3D, Clock, MeshPhongMaterial, ShaderMaterial, Color} from 'three';
+import { Group, ObjectLoader, AmbientLight, PointLight, LightShadow, PerspectiveCamera, SpotLight, IcosahedronGeometry, Points, Geometry, Vector3, Face3, SphereGeometry, MeshBasicMaterial, Mesh, Object3D, Clock, MeshPhongMaterial, ShaderMaterial, Color} from 'three';
 import Land from './Land/Land.js';
 import Flower from './Flower/Flower.js';
 import BasicLights from './Lights.js';
 import MPMGrid from '../mlsmpm.js';
+import MODEL from './Heart.json';
 
 const vertexShader =
     `
@@ -219,19 +220,40 @@ class SnowParticleDrops extends Group {
 
 
 class SnowGroup extends Group {
-  constructor(x_radius = 1, y_height = 2, padding = 0.2, N = 200, n = 10) {
+  constructor(x_radius = 1, y_height = 2, padding = 0.2, N = 200, n = 10, loadmodel = true) {
     super();
 
     this.mpm_grid = new MPMGrid([-x_radius, 0.1, -x_radius], [x_radius, y_height + 0.1, x_radius], n, 8 * 1e-4);
 
     const y_center = y_height / 2;
     const sphere_r = x_radius / 4;
-
-    for (let i = 0; i < N; ++i) {
-      // let snow_particle = new SnowParticle((Math.random()*2-1)*(x_radius-padding), Math.random() * (y_height - 2 * padding) + padding, (Math.random()*2-1)*(x_radius-padding));
-      let snow_particle = new SnowParticle((Math.random()*2-1)*sphere_r, (Math.random()*2-1)*sphere_r + y_center, (Math.random()*2-1)*sphere_r);
-      this.mpm_grid.add_particle(snow_particle);
-      this.add(snow_particle);
+    if(loadmodel){
+      const loader = new ObjectLoader();
+      loader.load(MODEL, (mesh)=>{
+        mesh.scale.set(0.01,0.01,0.01);
+        mesh.translateY(1);
+        // console.log(mesh.children[0].isMesh);
+        var geo = mesh.children[0].geometry;
+        var pos = geo.getAttribute('position');
+        console.log(pos.count);
+        const vertices = pos.array;
+        // console.log(pos.array);
+        for(let i = 0; i < vertices.length; i += 3){
+          var tmp = new Vector3(vertices[i], vertices[i+1], vertices[i+2]);
+          tmp = tmp.multiplyScalar(0.01).add( mesh.position);
+          let snow_particle = new SnowParticle(tmp.x, tmp.y, tmp.z);
+          this.mpm_grid.add_particle(snow_particle);
+          this.add(snow_particle);
+        }
+      });
+    }
+    else {
+      for (let i = 0; i < N; ++i) {
+        // let snow_particle = new SnowParticle((Math.random()*2-1)*(x_radius-padding), Math.random() * (y_height - 2 * padding) + padding, (Math.random()*2-1)*(x_radius-padding));
+        let snow_particle = new SnowParticle((Math.random() * 2 - 1) * sphere_r, (Math.random() * 2 - 1) * sphere_r + y_center, (Math.random() * 2 - 1) * sphere_r);
+        this.mpm_grid.add_particle(snow_particle);
+        this.add(snow_particle);
+      }
     }
   }
   advance() {
