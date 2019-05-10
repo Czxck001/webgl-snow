@@ -3,7 +3,7 @@ import Land from './Land/Land.js';
 import Flower from './Flower/Flower.js';
 import BasicLights from './Lights.js';
 import MPMGrid from '../mlsmpm.js';
-import MODEL from './Heart.json';
+import MODEL from './UncrackedEgg.json';
 import HashMap from 'hashmap';
 
 const vertexShader =
@@ -222,7 +222,7 @@ class SnowParticleDrops extends Group {
 
 class SnowGroup extends Group {
 
-  constructor(x_radius = 1, y_height = 2, padding = 0.2, N = 200, n = 10, loadmodel = true) {
+  constructor(x_radius = 1, y_height = 2, padding = 0.2, N = 50, n = 10, loadmodel = true) {
     super();
 
     this.mpm_grid = new MPMGrid([-x_radius, 0.1, -x_radius], [x_radius, y_height + 0.1, x_radius], n, 8 * 1e-4);
@@ -234,7 +234,7 @@ class SnowGroup extends Group {
       loader.load(MODEL, (mesh)=>{
         // mesh.scale.set(0.01,0.01,0.01);
         mesh.scale.set(1,1,1);
-        mesh.translateY(1);
+        mesh.translateY(0.5);
         // console.log(mesh.children[0].isMesh);
         var geo = mesh.children[0].geometry;
         console.log(geo);
