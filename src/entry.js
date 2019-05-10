@@ -7,7 +7,7 @@
  * 
  */
 
-import { WebGLRenderer, PerspectiveCamera, Scene, Vector3 } from 'three';
+import { WebGLRenderer, PerspectiveCamera, Scene, Vector3, BasicShadowMap, PCFSoftShadowMap } from 'three';
 import SeedScene from './objects/Scene.js';
 import Stats from './objects/stats.min';
 
@@ -18,6 +18,7 @@ const seedScene = new SeedScene();
 var stats = new Stats();
 
 stats.showPanel( 0 );
+
 document.body.appendChild( stats.dom );
 
 // scene
@@ -30,6 +31,9 @@ camera.lookAt(new Vector3(0,0,0));
 // renderer
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setClearColor(0x7ec0ee, 1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = PCFSoftShadowMap;
+
 
   // monitored code goes here
   // render loop
