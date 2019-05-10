@@ -10,6 +10,7 @@ export default class Land extends Group {
     this.name = 'land';
 
     loader.load(MODEL, (mesh)=>{
+      mesh.receiveShadow = true;
       this.add(mesh);
     });
   }
