@@ -7,13 +7,19 @@
  * 
  */
 
-import { WebGLRenderer, PerspectiveCamera, Scene, Vector3 } from 'three';
+import { WebGLRenderer, PerspectiveCamera, Scene, Vector3, BasicShadowMap, PCFSoftShadowMap } from 'three';
 import SeedScene from './objects/Scene.js';
+import Stats from 'stats-js';
 
 const scene = new Scene();
 const camera = new PerspectiveCamera();
 const renderer = new WebGLRenderer({antialias: true});
 const seedScene = new SeedScene();
+var stats = new Stats();
+
+stats.showPanel( 0 );
+
+document.body.appendChild( stats.dom );
 
 // scene
 scene.add(seedScene);
@@ -25,14 +31,22 @@ camera.lookAt(new Vector3(0,0,0));
 // renderer
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setClearColor(0x7ec0ee, 1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = PCFSoftShadowMap;
 
-// render loop
-const onAnimationFrameHandler = (timeStamp) => {
-  renderer.render(scene, camera);
-  seedScene.update && seedScene.update(timeStamp);
+
+  // monitored code goes here
+  // render loop
+  const onAnimationFrameHandler = (timeStamp) => {
+    stats.begin();
+    renderer.render(scene, camera);
+    seedScene.update && seedScene.update(timeStamp);
+    stats.end();
+    window.requestAnimationFrame(onAnimationFrameHandler);
+  }
   window.requestAnimationFrame(onAnimationFrameHandler);
-}
-window.requestAnimationFrame(onAnimationFrameHandler);
+
+
 
 // resize
 const windowResizeHanlder = () => { 
