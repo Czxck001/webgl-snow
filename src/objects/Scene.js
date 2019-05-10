@@ -102,10 +102,10 @@ class SnowParticleDrops extends Group {
 
 
 class SnowGroup extends Group {
-  constructor(x_radius = 1, y_height = 2, padding = 0.2, N = 100) {
+  constructor(x_radius = 1, y_height = 2, padding = 0.2, N = 200, n = 10) {
     super();
 
-    this.mpm_grid = new MPMGrid([-x_radius, 0, -x_radius], [x_radius, y_height, x_radius], 80, 1.5 * 1e-4);
+    this.mpm_grid = new MPMGrid([-x_radius, 0.1, -x_radius], [x_radius, y_height + 0.1, x_radius], n, 8 * 1e-4);
 
     const y_center = y_height / 2;
     const sphere_r = x_radius / 4;
