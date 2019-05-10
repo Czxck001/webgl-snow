@@ -7,7 +7,7 @@
  * 
  */
 
-import { WebGLRenderer, PerspectiveCamera, Scene, Vector3 } from 'three';
+import { WebGLRenderer, PerspectiveCamera, Scene, Vector3, BasicShadowMap, PCFSoftShadowMap} from 'three';
 import SeedScene from './objects/Scene.js';
 
 const scene = new Scene();
@@ -25,7 +25,8 @@ camera.lookAt(new Vector3(0,0,0));
 // renderer
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setClearColor(0x7ec0ee, 1);
-
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = PCFSoftShadowMap;
 // render loop
 const onAnimationFrameHandler = (timeStamp) => {
   renderer.render(scene, camera);

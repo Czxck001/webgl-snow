@@ -1,4 +1,4 @@
-import { Group, IcosahedronGeometry, Points, Geometry, Vector3, Face3, SphereGeometry, MeshBasicMaterial, Mesh, Object3D, Clock, MeshPhongMaterial, ShaderMaterial, Color} from 'three';
+import { Group,AmbientLight, PointLight,LightShadow,PerspectiveCamera,SpotLight, IcosahedronGeometry, Points, Geometry, Vector3, Face3, SphereGeometry, MeshBasicMaterial, Mesh, Object3D, Clock, MeshPhongMaterial, ShaderMaterial, Color} from 'three';
 import Land from './Land/Land.js';
 import Flower from './Flower/Flower.js';
 import BasicLights from './Lights.js';
@@ -120,7 +120,7 @@ const vertexShader =
       vUv = uv;
       noise = 0.1 *  -.10 * turbulence( .5 * normal );
       float b = 5.0 * pnoise( 0.05 * position, vec3( 100.0 ) );
-      float displacement = - 20.0 * noise + b;
+      float displacement = - 5.0 * noise + b;
       vec3 newPosition = position + normal * displacement;
       gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
     }
@@ -144,7 +144,7 @@ const fragmentShader =
       {
         // vec3 color = vec3( vUv * ( 1. - 2. * noise ), 0.0 );
         // vec3 color = new Color(0xffffff);
-        vec3 new_color = color * ( 1. - 30. * noise );
+        vec3 new_color = color * ( 1. - 10. * noise );
         gl_FragColor = vec4( new_color, 1.0 );
       }
     `;
@@ -173,8 +173,10 @@ class SnowParticle extends Group {
   constructor(x = 0, y = 0, z = 0) {
     super();
     const geometry = new SphereGeometry( 0.6, 32, 32 );
-    const geo = new IcosahedronGeometry( 0.3, 4 )
+    const geo = new IcosahedronGeometry( 0.06, 4 )
     const sphereMesh = new Mesh( geo, material );
+    sphereMesh.castShadow = true;
+
     this.add(sphereMesh);
 
     this.translateX(x);
@@ -236,7 +238,7 @@ class SnowParticleDrops extends Group {
 
 
 class SnowGroup extends Group {
-  constructor(x_radius = 1, y_height = 2, padding = 0.2, N = 1) {
+  constructor(x_radius = 2, y_height = 2, padding = 0.2, N = 70) {
     super();
 
     this.mpm_grid = new MPMGrid([-x_radius, 0, -x_radius], [x_radius, y_height, x_radius], 80, 1.5 * 1e-4);
@@ -263,11 +265,26 @@ export default class SeedScene extends Group {
     super();
 
     const land = new Land();
+    land.receiveShadow =true;
     // const flower = new Flower();
-    const lights = new BasicLights();
+    // const lights = new BasicLights();
+    const lights = new PointLight(0xFFFFFF);
+    const amblight = new AmbientLight(0xFFFFFF, 0.5);
+    lights.position.set(10,100,10);
+
+    lights.castShadow = true;
+    // var cam = new PerspectiveCamera();
+    // cam.position.set(6,3,-10);
+    // cam.lookAt(new Vector3(0,0,0));
+    // lights.shadow = new LightShadow(cam);
+    // lights.shadow.bias = -0.01;
+    // lights.shadow.mapSize.width = 100 * 2;
+    // lights.shadow.mapSize.height = 100 * 2;
+
+
     this.snow = new SnowGroup();
 
-    this.add(land, lights, this.snow);
+    this.add(land, lights,amblight, this.snow);
   }
 
   update(timeStamp) {
