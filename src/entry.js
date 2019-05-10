@@ -9,7 +9,7 @@
 
 import { WebGLRenderer, PerspectiveCamera, Scene, Vector3, BasicShadowMap, PCFSoftShadowMap } from 'three';
 import SeedScene from './objects/Scene.js';
-import Stats from './objects/stats.min';
+import Stats from 'stats-js';
 
 const scene = new Scene();
 const camera = new PerspectiveCamera();
