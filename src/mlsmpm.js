@@ -172,12 +172,13 @@ export default class MPMGrid {
                         const weight = w[i][0] * w[j][1] * w[k][2];  // ???
                         
                         // this.grid[ii] = add3D(this.grid[ii], sca3D(add3D(mv, [...mulMatVec(affine, dpos),0]), weight));
-
-                        this.grid[ii] = math.chain([...math.multiply(maffine, dpos), 0])
-                                            .add(mv)
-                                            .multiply(weight)
-                                            .add(this.grid[ii])
-                                            .done();
+                        if(0<=ii && ii <this.grid.length){
+                            this.grid[ii] = math.chain([...math.multiply(maffine, dpos), 0])
+                                                .add(mv)
+                                                .multiply(weight)
+                                                .add(this.grid[ii])
+                                                .done();
+                        }
                     }
                 }
             }

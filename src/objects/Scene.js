@@ -3,7 +3,8 @@ import Land from './Land/Land.js';
 import Flower from './Flower/Flower.js';
 import BasicLights from './Lights.js';
 import MPMGrid from '../mlsmpm.js';
-import MODEL from './UncrackedEgg.json';
+import MODEL_Heart from './Heart.json';
+import MODEL_Egg from './UncrackedEgg.json';
 import HashMap from 'hashmap';
 
 const vertexShader =
@@ -222,60 +223,66 @@ class SnowParticleDrops extends Group {
 
 class SnowGroup extends Group {
 
-  constructor(x_radius = 1, y_height = 2, padding = 0.2, N = 50, n = 10, loadmodel = true) {
+  constructor(x_radius = 1, y_height = 2, padding = 0.2, N = 50, n = 10, loadmodel = "Box") {
     super();
-
+    this.initialized = false;
     this.mpm_grid = new MPMGrid([-x_radius, 0.1, -x_radius], [x_radius, y_height + 0.1, x_radius], n, 8 * 1e-4);
+    this.init_snow(x_radius, y_height, padding, N, n,loadmodel);
+  }
 
-    const y_center = y_height / 2;
-    const sphere_r = x_radius / 4;
-    if(loadmodel){
+  init_snow(x_radius = 1, y_height = 2, padding = 0.2, N = 50, n = 10, loadmodel = 'Box') {
+    if(this.initialized){
+      return;
+    }
+    this.initialized = true;
+    if (loadmodel != "Box") {
+      console.log(loadmodel);
+      let MODEL;
+      if(loadmodel == 'Heart'){
+        MODEL = MODEL_Heart;
+      }
+      else if(loadmodel == 'Uncracked_Egg'){
+        MODEL = MODEL_Egg;
+      }
       const loader = new ObjectLoader();
-      loader.load(MODEL, (mesh)=>{
+      loader.load(MODEL, (mesh) => {
         // mesh.scale.set(0.01,0.01,0.01);
-        mesh.scale.set(1,1,1);
-        mesh.translateY(0.5);
-        // console.log(mesh.children[0].isMesh);
+        // mesh.scale.set(1, 1, 1);
+        mesh.translateY(1);
         var geo = mesh.children[0].geometry;
-        console.log(geo);
         var pos = geo.getAttribute('position');
-        console.log(pos.count);
         const vertices = pos.array;
-        console.log(pos.array);
-        console.log(mesh);
         // mesh.children[0].material.wireframe = true;
         // this.add(mesh);
         let dic = new HashMap();
         let cnt = 0;
-        for(let i = 0; i < vertices.length; i += 3){
-          var tmp = new Vector3(vertices[i], vertices[i+1], vertices[i+2]);
+        for (let i = 0; i < vertices.length; i += 3) {
+          var tmp = new Vector3(vertices[i], vertices[i + 1], vertices[i + 2]);
           let h_tmp = this.hash_function(tmp);
-          if( dic.has(h_tmp) ){
+          if (dic.has(h_tmp)) {
             continue;
-          }
-          else {
+          } else {
             dic.set(h_tmp, i);
             cnt += 1;
-            tmp = tmp.multiplyScalar(0.01).add(mesh.position);
+            tmp = tmp.multiplyScalar(0.009).add(mesh.position);
             let snow_particle = new SnowParticle(tmp.x, tmp.y, tmp.z);
             this.mpm_grid.add_particle(snow_particle);
             this.add(snow_particle);
           }
         }
-        for (let i = 0; i < N; ) {
+        for (let i = 0; i < N;) {
           let i1 = Math.floor(Math.random() * dic.count());
           let i2 = Math.floor(Math.random() * dic.count());
-          if(i1 == i2){
+          if (i1 == i2) {
             continue;
-          }
-          else{
+          } else {
             i += 1;
             cnt += 1;
             let w = Math.random();
             // linear interpolation
-            let v1 = new Vector3(vertices[i1], vertices[i1+1], vertices[i1+2]);
-            let v2 = new Vector3(vertices[i2], vertices[i2+1], vertices[i2+2]);
-            let tmp = v1.multiplyScalar(w).add( v2.multiplyScalar(1.0 - w) );
+            let v1 = new Vector3(vertices[i1], vertices[i1 + 1], vertices[i1 + 2]);
+            let v2 = new Vector3(vertices[i2], vertices[i2 + 1], vertices[i2 + 2]);
+            let tmp = v1.multiplyScalar(w).add(v2.multiplyScalar(1.0 - w));
             tmp = tmp.multiplyScalar(0.01).add(mesh.position);
             let snow_particle = new SnowParticle(tmp.x, tmp.y, tmp.z);
             this.mpm_grid.add_particle(snow_particle);
@@ -284,8 +291,9 @@ class SnowGroup extends Group {
         }
         console.log(cnt);
       });
-    }
-    else {
+    } else {
+      const y_center = y_height / 2;
+      const sphere_r = x_radius / 4;
       for (let i = 0; i < N; ++i) {
         // let snow_particle = new SnowParticle((Math.random()*2-1)*(x_radius-padding), Math.random() * (y_height - 2 * padding) + padding, (Math.random()*2-1)*(x_radius-padding));
         let snow_particle = new SnowParticle((Math.random() * 2 - 1) * sphere_r, (Math.random() * 2 - 1) * sphere_r + y_center, (Math.random() * 2 - 1) * sphere_r);
@@ -294,7 +302,11 @@ class SnowGroup extends Group {
       }
     }
   }
-
+  clear_snow(){
+    this.mpm_grid.grid = [];
+    this.children = [];
+    this.initialized = false;
+  }
   hash_function(v) {
       return v.x * 2.0 + v.y * 3.0 + v.z * 5.0;
   }

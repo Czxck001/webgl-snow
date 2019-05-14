@@ -10,6 +10,7 @@
 import { WebGLRenderer, PerspectiveCamera, Scene, Vector3, BasicShadowMap, PCFSoftShadowMap } from 'three';
 import SeedScene from './objects/Scene.js';
 import Stats from 'stats-js';
+import {GUI} from 'dat.gui';
 
 const scene = new Scene();
 const camera = new PerspectiveCamera();
@@ -18,6 +19,30 @@ const seedScene = new SeedScene();
 var stats = new Stats();
 
 stats.showPanel( 0 );
+
+
+// For GUI
+// http://www.hangge.com/blog/cache/detail_1785.html
+// http://workshop.chromeexperiments.com/examples/gui/#1--Basic-Usage
+var FizzyText = function() {
+  // this.message = 'dat.gui';
+  // this.speed = 0.8;
+  // this.displayOutline = false;
+  this.model = "Box";
+  this.N = 50;
+  this.clear = function() { seedScene.snow.clear_snow() };
+  this.start = function () {seedScene.snow.init_snow(undefined,undefined,undefined, this.N,undefined, this.model)};
+};
+
+const mygui = function() {
+  var text = new FizzyText();
+  var gui = new GUI();
+  gui.add(text, 'clear');
+  gui.add(text, 'start');
+  gui.add(text, 'model', ['Box', 'Heart', 'Uncracked_Egg']);
+  gui.add(text, 'N', 0, 100).step(1);
+};
+//end
 
 document.body.appendChild( stats.dom );
 
@@ -45,7 +70,7 @@ renderer.shadowMap.type = PCFSoftShadowMap;
     window.requestAnimationFrame(onAnimationFrameHandler);
   }
   window.requestAnimationFrame(onAnimationFrameHandler);
-
+  window.onload = mygui();
 
 
 // resize
