@@ -154,10 +154,10 @@ const shader = new ShaderMaterial(
 // } );
 
 class SnowParticle extends Group {
-  constructor(x = 0, y = 0, z = 0) {
+  constructor(x = 0, y = 0, z = 0, size = 0.06) {
     super();
 
-    const geo = new IcosahedronGeometry( 0.06, 4 )
+    const geo = new IcosahedronGeometry( size, 4 )
 
     const sphereMesh = new Mesh( geo, shader );
     sphereMesh.castShadow = true;
@@ -223,14 +223,14 @@ class SnowParticleDrops extends Group {
 
 class SnowGroup extends Group {
 
-  constructor(x_radius = 1, y_height = 2, padding = 0.2, N = 50, n = 10, loadmodel = "Box") {
+  constructor(x_radius = 1, y_height = 2, padding = 0.2, N = 50, n = 10, loadmodel = "Box", p_size = 0.06) {
     super();
     this.initialized = false;
     this.mpm_grid = new MPMGrid([-x_radius, 0.1, -x_radius], [x_radius, y_height + 0.1, x_radius], n, 8 * 1e-4);
-    this.init_snow(x_radius, y_height, padding, N, n,loadmodel);
+    this.init_snow(x_radius, y_height, padding, N, n, loadmodel, p_size);
   }
 
-  init_snow(x_radius = 1, y_height = 2, padding = 0.2, N = 50, n = 10, loadmodel = 'Box') {
+  init_snow(x_radius = 1, y_height = 2, padding = 0.2, N = 50, n = 10, loadmodel = 'Box', p_size = 0.06) {
     if(this.initialized){
       return;
     }
@@ -265,7 +265,7 @@ class SnowGroup extends Group {
             dic.set(h_tmp, i);
             cnt += 1;
             tmp = tmp.multiplyScalar(0.009).add(mesh.position);
-            let snow_particle = new SnowParticle(tmp.x, tmp.y, tmp.z);
+            let snow_particle = new SnowParticle(tmp.x, tmp.y, tmp.z, p_size);
             this.mpm_grid.add_particle(snow_particle);
             this.add(snow_particle);
           }
@@ -284,7 +284,7 @@ class SnowGroup extends Group {
             let v2 = new Vector3(vertices[i2], vertices[i2 + 1], vertices[i2 + 2]);
             let tmp = v1.multiplyScalar(w).add(v2.multiplyScalar(1.0 - w));
             tmp = tmp.multiplyScalar(0.01).add(mesh.position);
-            let snow_particle = new SnowParticle(tmp.x, tmp.y, tmp.z);
+            let snow_particle = new SnowParticle(tmp.x, tmp.y, tmp.z, p_size);
             this.mpm_grid.add_particle(snow_particle);
             this.add(snow_particle);
           }
@@ -296,7 +296,7 @@ class SnowGroup extends Group {
       const sphere_r = x_radius / 4;
       for (let i = 0; i < N; ++i) {
         // let snow_particle = new SnowParticle((Math.random()*2-1)*(x_radius-padding), Math.random() * (y_height - 2 * padding) + padding, (Math.random()*2-1)*(x_radius-padding));
-        let snow_particle = new SnowParticle((Math.random() * 2 - 1) * sphere_r, (Math.random() * 2 - 1) * sphere_r + y_center, (Math.random() * 2 - 1) * sphere_r);
+        let snow_particle = new SnowParticle((Math.random() * 2 - 1) * sphere_r, (Math.random() * 2 - 1) * sphere_r + y_center, (Math.random() * 2 - 1) * sphere_r, p_size);
         this.mpm_grid.add_particle(snow_particle);
         this.add(snow_particle);
       }

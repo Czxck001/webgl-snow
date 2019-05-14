@@ -30,8 +30,9 @@ var FizzyText = function() {
   // this.displayOutline = false;
   this.model = "Box";
   this.N = 50;
+  this.p_size = 0.06;
   this.clear = function() { seedScene.snow.clear_snow() };
-  this.start = function () {seedScene.snow.init_snow(undefined,undefined,undefined, this.N,undefined, this.model)};
+  this.start = function () {seedScene.snow.init_snow(undefined,undefined,undefined, this.N,undefined, this.model, this.p_size)};
 };
 
 const mygui = function() {
@@ -41,6 +42,7 @@ const mygui = function() {
   gui.add(text, 'start');
   gui.add(text, 'model', ['Box', 'Heart', 'Uncracked_Egg']);
   gui.add(text, 'N', 0, 100).step(1);
+  gui.add(text, 'p_size', 0.001, 0.1).step(0.001);
 };
 //end
 
