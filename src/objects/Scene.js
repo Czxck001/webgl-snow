@@ -349,6 +349,8 @@ export default class SeedScene extends Group {
     this.snow = new SnowGroup();
 
     this.add(land, lights,amblight, this.snow);
+    // this.add(land, lights,amblight);
+
   }
 
   update(timeStamp) {
