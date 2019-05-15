@@ -223,14 +223,14 @@ class SnowParticleDrops extends Group {
 
 class SnowGroup extends Group {
 
-  constructor(x_radius = 1, y_height = 2, padding = 0.2, N = 50, n = 10, loadmodel = "Box", p_size = 0.06) {
+  constructor(x_radius = 2, y_height = 4, padding = 0.2, N = 50, n = 10, loadmodel = "Box", p_size = 0.06) {
     super();
     this.initialized = false;
     this.mpm_grid = new MPMGrid([-x_radius, 0.1, -x_radius], [x_radius, y_height + 0.1, x_radius], n, 8 * 1e-4);
     this.init_snow(x_radius, y_height, padding, N, n, loadmodel, p_size);
   }
 
-  init_snow(x_radius = 1, y_height = 2, padding = 0.2, N = 50, n = 10, loadmodel = 'Box', p_size = 0.06) {
+  init_snow(x_radius = 2, y_height = 4, padding = 0.2, N = 50, n = 10, loadmodel = 'Box', p_size = 0.06) {
     if(this.initialized){
       return;
     }
@@ -282,8 +282,11 @@ class SnowGroup extends Group {
             // linear interpolation
             let v1 = new Vector3(vertices[i1], vertices[i1 + 1], vertices[i1 + 2]);
             let v2 = new Vector3(vertices[i2], vertices[i2 + 1], vertices[i2 + 2]);
+            v1 = v1.multiplyScalar(0.009).add(mesh.position);
+            v2 = v2.multiplyScalar(0.009).add(mesh.position);
+
             let tmp = v1.multiplyScalar(w).add(v2.multiplyScalar(1.0 - w));
-            tmp = tmp.multiplyScalar(0.01).add(mesh.position);
+            // tmp = tmp.multiplyScalar(0.009).add(mesh.position);
             let snow_particle = new SnowParticle(tmp.x, tmp.y, tmp.z, p_size);
             this.mpm_grid.add_particle(snow_particle);
             this.add(snow_particle);
@@ -292,13 +295,16 @@ class SnowGroup extends Group {
         console.log(cnt);
       });
     } else {
-      const y_center = y_height / 2;
-      const sphere_r = x_radius / 4;
+      const y_center = y_height / 4;
+      const sphere_r = x_radius/2;
       for (let i = 0; i < N; ++i) {
         // let snow_particle = new SnowParticle((Math.random()*2-1)*(x_radius-padding), Math.random() * (y_height - 2 * padding) + padding, (Math.random()*2-1)*(x_radius-padding));
-        let snow_particle = new SnowParticle((Math.random() * 2 - 1) * sphere_r, (Math.random() * 2 - 1) * sphere_r + y_center, (Math.random() * 2 - 1) * sphere_r, p_size);
-        this.mpm_grid.add_particle(snow_particle);
-        this.add(snow_particle);
+        let snow_particle1 = new SnowParticle((Math.random() ) * sphere_r - sphere_r/2, (Math.random() ) * sphere_r + y_center, Math.random() * 0.25 * sphere_r, p_size);
+        let snow_particle2 = new SnowParticle((Math.random() ) * sphere_r, (Math.random() ) * sphere_r + y_center - sphere_r, Math.random() * 0.25 * sphere_r, p_size);
+        this.mpm_grid.add_particle(snow_particle1);
+        this.mpm_grid.add_particle(snow_particle2);
+        this.add(snow_particle1);
+        this.add(snow_particle2);
       }
     }
   }

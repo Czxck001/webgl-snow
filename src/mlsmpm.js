@@ -9,8 +9,8 @@ import * as async from "async";
 const particle_mass = 1.0;
 const vol = 0.03; // particle volume
 const hardening = 10.0; // hardening constant for snow plasticity under compression
-const E = 1e+1; // Young's modulus
-const nu = 0.1; // Poisson's ratio
+const E = 14; // Young's modulus
+const nu = 0.2; // Poisson's ratio
 const mu_0 = E / (2 * (1 + nu)); // Shear modulus (or Dynamic viscosity in fluids)
 const lambda_0 = E * nu / ((1+nu) * (1 - 2 * nu)); // Lamé's 1st parameter \lambda=K-(2/3)\mu, where K is the Bulk modulus
 const plastic = 1; // whether (1=true) or not (0=false) to simulate plasticity
