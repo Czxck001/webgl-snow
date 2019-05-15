@@ -282,8 +282,11 @@ class SnowGroup extends Group {
             // linear interpolation
             let v1 = new Vector3(vertices[i1], vertices[i1 + 1], vertices[i1 + 2]);
             let v2 = new Vector3(vertices[i2], vertices[i2 + 1], vertices[i2 + 2]);
+            v1 = v1.multiplyScalar(0.009).add(mesh.position);
+            v2 = v2.multiplyScalar(0.009).add(mesh.position);
+
             let tmp = v1.multiplyScalar(w).add(v2.multiplyScalar(1.0 - w));
-            tmp = tmp.multiplyScalar(0.01).add(mesh.position);
+            // tmp = tmp.multiplyScalar(0.009).add(mesh.position);
             let snow_particle = new SnowParticle(tmp.x, tmp.y, tmp.z, p_size);
             this.mpm_grid.add_particle(snow_particle);
             this.add(snow_particle);
