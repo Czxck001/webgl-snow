@@ -2,7 +2,7 @@
 
 ### CS284A Computer Graphics and Imaging - Final Project
 
-Fan Zhang, Yu-Chieh Lan and Zhaoxiong Cui
+Fan Zhang, Yu-Chieh Lan, Zhaoxiong Cui
 
 University of California, Berkeley
 
@@ -12,7 +12,7 @@ Since we are CS284A students, so our final deliverables consist of a video and a
 
 Paper: [Link](./CS284_Final_Paper.pdf)
 
-Video: [Link](<https://www.youtube.com/watch?v=Zna6Vt-kGm8&feature=youtu.be>)
+Video: [Link](https://youtu.be/ZzCRdkHag3A)
 
 For detailed explaination of what we have done, please see our paper. 
 
@@ -27,4 +27,4 @@ After downloading it, in terminal type `npm install` to set things up. To get it
 ### Acknowledgements
 
 - Thanks to [Yuanming Hu](http://taichi.graphics/me/) for developing the open-source Computer Graphics R&D Infrastructure [Taichi]([http://taichi.graphics/](http://taichi.graphics/)) and making the incredible 88-line version of material point method (MPM) available on [Github](https://github.com/yuanming-hu/taichi_mpm).
-- Thanks to Roberto Toro for open-source the 2D javascript version of [mls-mpm](https://github.com/r03ert0/mls-mpm.js). 
+- Thanks to Roberto Toro for developing the open-source the 2D javascript version of [mls-mpm](https://github.com/r03ert0/mls-mpm.js). 
